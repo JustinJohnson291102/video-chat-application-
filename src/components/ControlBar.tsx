@@ -9,7 +9,9 @@ import {
   Monitor,
   Copy,
   Users,
-  Check
+  Check,
+  Wifi,
+  WifiOff
 } from 'lucide-react';
 import { useVideo } from '../contexts/VideoContext';
 
@@ -58,6 +60,15 @@ const ControlBar: React.FC<ControlBarProps> = ({ onToggleChat, isChatOpen }) => 
   return (
     <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-white bg-opacity-90 backdrop-blur-md rounded-2xl shadow-2xl px-6 py-4">
       <div className="flex items-center gap-4">
+        {/* Connection Status */}
+        <div className={`p-2 rounded-full ${state.isConnected ? 'bg-green-100' : 'bg-red-100'}`}>
+          {state.isConnected ? (
+            <Wifi className="w-4 h-4 text-green-600" />
+          ) : (
+            <WifiOff className="w-4 h-4 text-red-600" />
+          )}
+        </div>
+
         {/* Audio Control */}
         <button
           onClick={handleToggleAudio}

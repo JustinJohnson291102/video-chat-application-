@@ -1,10 +1,12 @@
 {
-  "name": "vite-react-typescript-starter",
+  "name": "videocall-pro",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "client": "vite",
+    "server": "node server/index.js",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview"
@@ -15,7 +17,11 @@
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.21.1",
     "socket.io-client": "^4.7.4",
-    "uuid": "^9.0.1"
+    "uuid": "^9.0.1",
+    "socket.io": "^4.7.4",
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "concurrently": "^8.2.2"
   },
   "devDependencies": {
     "@eslint/js": "^9.9.1",
