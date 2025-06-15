@@ -64,7 +64,11 @@ io.on('connection', (socket) => {
       videoEnabled: true
     });
 
-    // Notify others in the room
+    // Send existing participants to the new user first
+    const existingParticipants = Array.from(room.values()).filter(p => p.id !== socket.id);
+    socket.emit('existing-participants', existingParticipants);
+
+    // Then notify others about the new user
     socket.to(roomId).emit('user-joined', {
       id: socket.id,
       name: userName,
@@ -72,16 +76,12 @@ io.on('connection', (socket) => {
       videoEnabled: true
     });
 
-    // Send existing participants to the new user
-    const participants = Array.from(room.values()).filter(p => p.id !== socket.id);
-    socket.emit('existing-participants', participants);
-
     console.log(`Room ${roomId} now has ${room.size} participants`);
   });
 
-  // Handle WebRTC signaling
+  // Handle WebRTC signaling - these are the key parts for video calling
   socket.on('offer', ({ target, offer }) => {
-    console.log(`Offer from ${socket.id} to ${target}`);
+    console.log(`Relaying offer from ${socket.id} to ${target}`);
     socket.to(target).emit('offer', {
       sender: socket.id,
       offer: offer
@@ -89,7 +89,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('answer', ({ target, answer }) => {
-    console.log(`Answer from ${socket.id} to ${target}`);
+    console.log(`Relaying answer from ${socket.id} to ${target}`);
     socket.to(target).emit('answer', {
       sender: socket.id,
       answer: answer
@@ -97,6 +97,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('ice-candidate', ({ target, candidate }) => {
+    console.log(`Relaying ICE candidate from ${socket.id} to ${target}`);
     socket.to(target).emit('ice-candidate', {
       sender: socket.id,
       candidate: candidate
@@ -181,5 +182,5 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log(`📱 Local: http://localhost:${PORT}`);
   console.log(`🌐 Network: http://${localIP}:${PORT}`);
   console.log(`📞 Mobile Access: http://${localIP}:3000`);
-  console.log('✅ CORS enabled for all origins');
+  console.log('✅ Server ready for video calls');
 });
