@@ -550,19 +550,20 @@ export const VideoProvider: React.FC<VideoProviderProps> = ({ children }) => {
       }
       
       // Update peer connections with new stream
-      updatePeerConnectionStreams();
+      await updatePeerConnectionStreams();
       
     } catch (error) {
       console.error('❌ Error sharing screen:', error);
     }
   };
 
-  const updatePeerConnectionStreams = () => {
+  const updatePeerConnectionStreams = async () => {
     if (!localStreamRef.current) return;
     
     console.log('🔄 Updating peer connections with new stream');
     
-    peerConnections.current.forEach(async (peerConnection, participantId) => {
+    // Use Promise.all instead of forEach for proper async handling
+    const updatePromises = Array.from(peerConnections.current.entries()).map(async ([participantId, peerConnection]) => {
       try {
         // Remove old tracks
         const senders = peerConnection.getSenders();
@@ -584,12 +585,16 @@ export const VideoProvider: React.FC<VideoProviderProps> = ({ children }) => {
         console.error(`❌ Error updating stream for ${participantId}:`, error);
       }
     });
+
+    await Promise.all(updatePromises);
   };
 
   // Update peer connections when local stream changes
   useEffect(() => {
     if (localStreamRef.current && peerConnections.current.size > 0) {
-      updatePeerConnectionStreams();
+      updatePeerConnectionStreams().catch(error => {
+        console.error('❌ Error updating peer connection streams:', error);
+      });
     }
   }, [state.localStream]);
 
@@ -601,7 +606,7 @@ export const VideoProvider: React.FC<VideoProviderProps> = ({ children }) => {
         audioEnabled: state.isAudioEnabled 
       });
     }
-  }, [state.isAudioEnabled]);
+  }, [state.isAudioEnabled, state.roomId]);
 
   useEffect(() => {
     if (socketRef.current && state.roomId) {
@@ -610,7 +615,7 @@ export const VideoProvider: React.FC<VideoProviderProps> = ({ children }) => {
         videoEnabled: state.isVideoEnabled 
       });
     }
-  }, [state.isVideoEnabled]);
+  }, [state.isVideoEnabled, state.roomId]);
 
   const value = {
     state,
