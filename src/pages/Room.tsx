@@ -12,6 +12,7 @@ const Room: React.FC = () => {
   const { state, initializeMedia, joinRoom } = useVideo();
   const navigate = useNavigate();
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(true);
   const mediaInitialized = useRef(false);
 
   useEffect(() => {
@@ -28,9 +29,22 @@ const Room: React.FC = () => {
     const initRoom = async () => {
       if (!mediaInitialized.current) {
         console.log('🚀 Initializing room for user:', user.name);
-        await initializeMedia();
-        joinRoom(roomId, user.name);
-        mediaInitialized.current = true;
+        setIsInitializing(true);
+        
+        try {
+          await initializeMedia();
+          joinRoom(roomId, user.name);
+          mediaInitialized.current = true;
+          
+          // Wait a bit for connection to establish
+          setTimeout(() => {
+            setIsInitializing(false);
+          }, 2000);
+          
+        } catch (error) {
+          console.error('❌ Failed to initialize room:', error);
+          setIsInitializing(false);
+        }
       }
     };
 
@@ -67,10 +81,20 @@ const Room: React.FC = () => {
             <p className="text-blue-200">
               {state.participants.length + 1} participant{state.participants.length === 0 ? '' : 's'} connected
             </p>
-            {!state.isConnected && (
-              <div className="mt-4 bg-yellow-900 bg-opacity-50 border border-yellow-600 rounded-lg p-3">
-                <p className="text-yellow-300 text-sm">
-                  🔄 Connecting to server... Please wait
+            
+            {/* Connection Status */}
+            {isInitializing && (
+              <div className="mt-4 bg-blue-900 bg-opacity-50 border border-blue-600 rounded-lg p-3">
+                <p className="text-blue-300 text-sm">
+                  🎥 Setting up your camera and microphone...
+                </p>
+              </div>
+            )}
+            
+            {!state.isConnected && !isInitializing && (
+              <div className="mt-4 bg-red-900 bg-opacity-50 border border-red-600 rounded-lg p-3">
+                <p className="text-red-300 text-sm">
+                  ❌ Connection lost. Trying to reconnect...
                 </p>
               </div>
             )}
@@ -115,7 +139,7 @@ const Room: React.FC = () => {
           </div>
 
           {/* Instructions */}
-          {state.participants.length === 0 && (
+          {state.participants.length === 0 && state.isConnected && !isInitializing && (
             <div className="mt-8 bg-blue-900 bg-opacity-30 rounded-xl p-6">
               <h3 className="text-white font-semibold mb-4 text-center">📱 How to invite others:</h3>
               <div className="grid md:grid-cols-2 gap-4 text-blue-200 text-sm">
@@ -136,6 +160,15 @@ const Room: React.FC = () => {
                   </ol>
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* Success Message */}
+          {state.participants.length > 0 && (
+            <div className="mt-6 bg-green-900 bg-opacity-30 rounded-xl p-4 text-center">
+              <p className="text-green-300">
+                🎉 Great! You're now connected with {state.participants.length} other participant{state.participants.length === 1 ? '' : 's'}
+              </p>
             </div>
           )}
         </div>
